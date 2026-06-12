@@ -1,0 +1,19 @@
+# Binaries (stray `go build` outputs are named after their package dir)
+/bin/
+/dist/
+/xinvoice-pdf
+*.exe
+
+# Test / coverage artifacts
+*.out
+coverage.*
+
+# Go workspace files (local multi-module dev only)
+go.work
+go.work.sum
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/

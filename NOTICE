@@ -1,0 +1,19 @@
+go-xinvoice-pdf
+Copyright 2026 andeedotnet
+
+This module embeds and extracts the XRechnung invoice XML into/from hybrid
+ZUGFeRD / Factur-X PDFs. It builds on the following third-party works:
+
+  - pdfcpu (https://github.com/pdfcpu/pdfcpu), a PDF processing library used for
+    reading and writing the PDF container, the embedded-file (Associated Files)
+    structures and the XMP metadata. Licensed under the Apache License, Version 2.0.
+
+  - go-xinvoice (../go-xinvoice), used for all XRechnung XML conversion and
+    validation. Licensed under the MIT License.
+
+The hybrid-PDF layout follows the ZUGFeRD / Factur-X specification published by
+FeRD and FNFE-MPE (https://www.ferd-net.de/ and https://fnfe-mpe.org/factur-x/).
+
+Test fixtures under testdata/ include an XRechnung test-suite invoice instance
+derived from the official KoSIT artifacts (Apache-2.0); see ../go-xinvoice/NOTICE
+for that attribution. This NOTICE must be retained in redistributions.
