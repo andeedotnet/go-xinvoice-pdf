@@ -1,6 +1,11 @@
 # go-xinvoice-pdf
 
-A pure-Go companion to [`go-xinvoice`](../go-xinvoice) for **hybrid ZUGFeRD / Factur-X**
+[![CI](https://github.com/andeedotnet/go-xinvoice-pdf/actions/workflows/ci.yml/badge.svg)](https://github.com/andeedotnet/go-xinvoice-pdf/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/andeedotnet/go-xinvoice-pdf.svg)](https://pkg.go.dev/github.com/andeedotnet/go-xinvoice-pdf)
+[![Go Report Card](https://goreportcard.com/badge/github.com/andeedotnet/go-xinvoice-pdf)](https://goreportcard.com/report/github.com/andeedotnet/go-xinvoice-pdf)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+A pure-Go companion to [`go-xinvoice`](https://github.com/andeedotnet/go-xinvoice) for **hybrid ZUGFeRD / Factur-X**
 invoices: embed the XRechnung invoice XML into a PDF, and extract it back out.
 
 A hybrid invoice is a **PDF/A-3** document that carries the machine-readable invoice as an
