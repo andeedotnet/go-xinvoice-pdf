@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-07-03
+
+### Fixed
+- Disabled pdfcpu's on-disk configuration directory (unless the host application
+  set a custom `model.ConfigPath` before first use). pdfcpu's default-config
+  bootstrap writes and re-reads `<UserConfigDir>/pdfcpu/config.yml`
+  non-atomically, so concurrent *processes* — e.g. `go test ./...` running one
+  test binary per package — could read a half-written file and panic with
+  "invalid validationMode". The library now runs on pdfcpu's in-memory defaults
+  (identical to the shipped config.yml) and no longer creates or reads a
+  machine-global config directory.
+
 ## [0.1.3] - 2026-07-02
 
 ### Changed

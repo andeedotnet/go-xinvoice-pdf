@@ -19,7 +19,7 @@ embedded *associated file*. This module:
 
 The PDF container is handled by [pdfcpu](https://github.com/pdfcpu/pdfcpu) (pure Go, no CGo).
 
-> Status: early. See [`CHANGELOG.md`](./CHANGELOG.md).
+> Status: **v0.1.4** — early but usable. See [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Install
 
@@ -76,6 +76,20 @@ conformance level written to the XMP metadata:
 |-------------|----------------------|-----------------------------------------|
 | `xrechnung` | `XRECHNUNG`          | default; the German XRechnung CIUS       |
 | `en16931`   | `EN 16931`           | the generic EN 16931 (COMFORT) profile   |
+
+## Notes / hardening
+
+- **Decompression-bomb guards.** Extraction caps the decoded size of an embedded file at
+  64 MiB and decodes only the attachment actually selected, one at a time (Flate expands up
+  to ~1000:1); oversized attachments fail extraction instead of exhausting memory. The PDF/A
+  detection during embedding decodes the XMP metadata stream with a 16 MiB cap.
+- **No pdfcpu config dir.** The library runs pdfcpu on its in-memory default configuration:
+  it never creates or reads `~/.config/pdfcpu/`, so behavior does not vary with a
+  machine-global config.yml and concurrent processes cannot race on pdfcpu's config
+  bootstrap. A host application that sets a custom `model.ConfigPath` before first use
+  keeps its own configuration.
+- **Concurrency-safe.** pdfcpu's one-time global initialization is serialized internally,
+  so concurrent embeds/extracts (e.g. a server handling parallel requests) are safe.
 
 ## Limitations
 
