@@ -34,7 +34,7 @@ type embeddedFile struct {
 // would defeat the decode cap. Here only the streams actually inspected are
 // decoded, one at a time, each limited to maxDecodedAttachmentBytes.
 func Extract(pdf []byte) (xml []byte, name string, err error) {
-	conf := model.NewDefaultConfiguration()
+	conf := newConfiguration()
 	conf.ValidationMode = model.ValidationRelaxed
 
 	// ReadValidateAndOptimize binds the name trees (EmbeddedFiles), which plain

@@ -47,7 +47,7 @@ func (o *Options) applyDefaults() {
 func Embed(pdf, ciiXML []byte, opt Options) (out []byte, warnings []string, err error) {
 	opt.applyDefaults()
 
-	conf := model.NewDefaultConfiguration()
+	conf := newConfiguration()
 	conf.ValidationMode = model.ValidationRelaxed
 	// Write a classic cross-reference table and no object streams: simpler output,
 	// broadly accepted by PDF/A validators, and keeps the associated-file dicts as

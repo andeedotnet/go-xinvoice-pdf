@@ -24,8 +24,8 @@ import (
 	xinvoicepdf "github.com/andeedotnet/go-xinvoice-pdf"
 )
 
-// version is the module version, kept in sync with the v0.1.1 git tag.
-const version = "0.1.1"
+// version is the module version, kept in sync with the v0.1.2 git tag.
+const version = "0.1.2"
 
 func main() {
 	if len(os.Args) < 2 {

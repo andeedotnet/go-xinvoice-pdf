@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
@@ -183,6 +184,43 @@ func TestExtractLegacyFilename(t *testing.T) {
 func TestExtractNoAttachment(t *testing.T) {
 	if _, _, err := Extract(testdata(t, "minimal.pdf")); err != ErrNoEmbeddedXML {
 		t.Errorf("Extract on plain PDF: err = %v, want ErrNoEmbeddedXML", err)
+	}
+}
+
+// TestConcurrentEmbedExtract runs Embed and Extract in parallel to exercise the
+// shared pdfcpu configuration path under the race detector. pdfcpu's one-time
+// global config init is not concurrency-safe on its own; newConfiguration
+// serializes it, so parallel PDF work (as in a server) must stay race-free.
+func TestConcurrentEmbedExtract(t *testing.T) {
+	pdf := testdata(t, "minimal.pdf")
+	cii := testdata(t, "factur-x.xml")
+	hybrid, _, err := Embed(pdf, cii, Options{ConformanceLevel: xmp.ConformanceXRechnung})
+	if err != nil {
+		t.Fatalf("Embed: %v", err)
+	}
+
+	const workers = 16
+	var wg sync.WaitGroup
+	errc := make(chan error, workers)
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			var e error
+			if i%2 == 0 {
+				_, _, e = Embed(pdf, cii, Options{ConformanceLevel: xmp.ConformanceEN16931})
+			} else {
+				_, _, e = Extract(hybrid)
+			}
+			if e != nil {
+				errc <- e
+			}
+		}(i)
+	}
+	wg.Wait()
+	close(errc)
+	for e := range errc {
+		t.Errorf("concurrent op failed: %v", e)
 	}
 }
 
