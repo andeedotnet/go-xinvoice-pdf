@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-07-02
+
+### Changed
+- Bumped the `go-xinvoice` dependency to v0.1.4 (fuzz-tested XML/JSON parsers, CI
+  govulncheck, and validation correctness fixes; no public API change).
+
 ## [0.1.2] - 2026-07-02
 
 ### Fixed

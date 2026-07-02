@@ -3,7 +3,7 @@ module github.com/andeedotnet/go-xinvoice-pdf
 go 1.26
 
 require (
-	github.com/andeedotnet/go-xinvoice v0.1.3
+	github.com/andeedotnet/go-xinvoice v0.1.4
 	github.com/pdfcpu/pdfcpu v0.13.0
 )
 
