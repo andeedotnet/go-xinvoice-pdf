@@ -2,11 +2,13 @@ package facturx
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/filter"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 
@@ -181,5 +183,85 @@ func TestExtractLegacyFilename(t *testing.T) {
 func TestExtractNoAttachment(t *testing.T) {
 	if _, _, err := Extract(testdata(t, "minimal.pdf")); err != ErrNoEmbeddedXML {
 		t.Errorf("Extract on plain PDF: err = %v, want ErrNoEmbeddedXML", err)
+	}
+}
+
+// lowerAttachmentLimit shrinks the decode cap for the duration of a test.
+func lowerAttachmentLimit(t *testing.T, n int64) {
+	t.Helper()
+	old := maxDecodedAttachmentBytes
+	maxDecodedAttachmentBytes = n
+	t.Cleanup(func() { maxDecodedAttachmentBytes = old })
+}
+
+// attachAs writes pdf with data attached under the given file name.
+func attachAs(t *testing.T, pdf, data []byte, name string) []byte {
+	t.Helper()
+	conf := model.NewDefaultConfiguration()
+	conf.ValidationMode = model.ValidationRelaxed
+	ctx, err := api.ReadContext(bytes.NewReader(pdf), conf)
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	a := model.Attachment{Reader: bytes.NewReader(data), ID: name, FileName: name}
+	if err := ctx.AddAttachment(a, false); err != nil {
+		t.Fatalf("AddAttachment: %v", err)
+	}
+	var buf bytes.Buffer
+	if err := api.WriteContext(ctx, &buf); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	return buf.Bytes()
+}
+
+// oversizedXML returns an invoice-looking XML that decodes to well over the
+// (lowered) test limit while compressing to a tiny Flate stream.
+func oversizedXML(n int) []byte {
+	var b bytes.Buffer
+	b.WriteString("<rsm:CrossIndustryInvoice>")
+	b.Write(bytes.Repeat([]byte(" "), n))
+	b.WriteString("</rsm:CrossIndustryInvoice>")
+	return b.Bytes()
+}
+
+// TestExtractOversizedNamedAttachment: a factur-x.xml whose decoded size
+// exceeds the cap must fail the extraction with the decode-limit error rather
+// than expand into memory (decompression-bomb guard).
+func TestExtractOversizedNamedAttachment(t *testing.T) {
+	lowerAttachmentLimit(t, 8<<10)
+	pdf := attachAs(t, testdata(t, "minimal.pdf"), oversizedXML(64<<10), AttachmentName)
+
+	_, _, err := Extract(pdf)
+	if err == nil {
+		t.Fatal("Extract accepted an attachment beyond the decode limit")
+	}
+	if !errors.Is(err, filter.ErrDecodeLimitExceeded) {
+		t.Errorf("err = %v, want filter.ErrDecodeLimitExceeded", err)
+	}
+}
+
+// TestExtractOversizedFallbackSkipped: in the content-sniffing fallback an
+// oversized attachment is skipped (not decoded) instead of failing or being
+// returned.
+func TestExtractOversizedFallbackSkipped(t *testing.T) {
+	lowerAttachmentLimit(t, 8<<10)
+	pdf := attachAs(t, testdata(t, "minimal.pdf"), oversizedXML(64<<10), "unrelated.xml")
+
+	if _, _, err := Extract(pdf); err != ErrNoEmbeddedXML {
+		t.Errorf("err = %v, want ErrNoEmbeddedXML (oversized fallback attachment must be skipped)", err)
+	}
+}
+
+// TestExtractWithinLimit: the guard must not reject legitimate sizes.
+func TestExtractWithinLimit(t *testing.T) {
+	cii := testdata(t, "factur-x.xml")
+	pdf := attachAs(t, testdata(t, "minimal.pdf"), cii, AttachmentName)
+
+	got, name, err := Extract(pdf)
+	if err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+	if name != AttachmentName || !bytes.Equal(got, cii) {
+		t.Errorf("round trip mismatch: name=%q, %d vs %d bytes", name, len(got), len(cii))
 	}
 }

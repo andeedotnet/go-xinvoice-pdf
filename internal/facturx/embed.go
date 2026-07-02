@@ -79,6 +79,11 @@ func Embed(pdf, ciiXML []byte, opt Options) (out []byte, warnings []string, err 
 	return buf.Bytes(), warnings, nil
 }
 
+// maxDecodedMetadataBytes caps the decoded size of the XMP metadata stream
+// inspected by isPDFA — the same decompression-bomb guard as for attachment
+// extraction. Real XMP packets are a few KB.
+const maxDecodedMetadataBytes = 16 << 20
+
 // isPDFA reports whether the document already declares PDF/A conformance in its
 // XMP metadata (looked up by the pdfaid:part marker).
 func isPDFA(ctx *model.Context) bool {
@@ -96,7 +101,7 @@ func isPDFA(ctx *model.Context) bool {
 	}
 	data := sd.Content
 	if len(data) == 0 {
-		if err := sd.Decode(); err == nil {
+		if err := sd.DecodeWithLimit(maxDecodedMetadataBytes); err == nil {
 			data = sd.Content
 		}
 	}
